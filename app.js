@@ -31,6 +31,95 @@ async function checkExistingSession() {
     }
 }
 
+// --- ส่วนฟังก์ชันที่หายไป (Missing Functions) ---
+
+function initEventListeners() {
+    // 1. ฟอร์ม Login
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+
+    // 2. ปุ่มบันทึกเวลา
+    document.getElementById('checkin-btn')?.addEventListener('click', handleCheckIn);
+    document.getElementById('checkout-btn')?.addEventListener('click', handleCheckOut);
+
+    // 3. ปุ่มเมนูอื่นๆ
+    document.getElementById('logout-btn-desktop')?.addEventListener('click', () => {
+        document.getElementById('logout-modal').classList.remove('hidden');
+    });
+
+    document.getElementById('confirm-logout')?.addEventListener('click', () => {
+        localStorage.removeItem('workSystemUser');
+        location.reload(); // รีโหลดหน้าเพื่อกลับไป Login
+    });
+
+    document.getElementById('cancel-logout')?.addEventListener('click', () => {
+        document.getElementById('logout-modal').classList.add('hidden');
+    });
+
+    // 4. การดึงพิกัด GPS ทันทีที่เข้าหน้าบันทึกเวลา
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+            (pos) => {
+                userPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                const locText = document.getElementById('location-info');
+                if (locText) locText.textContent = `พิกัดปัจจุบัน: ${userPosition.lat.toFixed(4)}, ${userPosition.lng.toFixed(4)}`;
+            },
+            (err) => console.error("GPS Error:", err),
+            { enableHighAccuracy: true }
+        );
+    }
+}
+
+// ฟังก์ชันอัปเดตเวลาบนหัวเว็บ
+function updateCurrentTime() {
+    const now = new Date();
+    const timeDisplay = document.getElementById('current-time');
+    if (timeDisplay) {
+        timeDisplay.textContent = now.toLocaleDateString('th-TH', {
+            day: 'numeric', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+    }
+}
+
+// ฟังก์ชันเปลี่ยนหน้า (Navigation)
+function navigateTo(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    const targetPage = document.getElementById(`${page}-page`);
+    if (targetPage) {
+        targetPage.classList.remove('hidden');
+        currentPage = page;
+        
+        // โหลดข้อมูลตามหน้า
+        if (page === 'dashboard') loadDashboardData();
+        if (page === 'checkin') loadCheckInPage();
+        if (page === 'history') loadHistoryData();
+    }
+}
+
+// ฟังก์ชันจัดการ Loading ตอน Login
+function toggleLoginLoading(isLoading) {
+    const text = document.getElementById('login-text');
+    const loader = document.getElementById('login-loading');
+    if (isLoading) {
+        text.classList.add('hidden');
+        loader.classList.remove('hidden');
+    } else {
+        text.classList.remove('hidden');
+        loader.classList.add('hidden');
+    }
+}
+
+// ฟังก์ชันแสดง Loader กลางจอ
+function showLoader(message) {
+    document.getElementById('loader-message').textContent = message;
+    document.getElementById('global-loader').classList.remove('hidden');
+}
+
+function hideLoader() {
+    document.getElementById('global-loader').classList.add('hidden');
+}
+
 // --- 1. ระบบ Login จริง ---
 async function handleLogin(e) {
     e.preventDefault();
