@@ -7,7 +7,7 @@ const SUPABASE_URL = 'https://bibygpupfqmbbwecqgdb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpYnlncHVwZnFtYmJ3ZWNxZ2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNTQ4NDQsImV4cCI6MjA4NTgzMDg0NH0.AL-c_UbvMzsy1DIZFuABStYNeXK2A-r_0uWg26-ET2A';
 
 // Initialize Supabase client
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseDB = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // App State
 let currentUser = null;
