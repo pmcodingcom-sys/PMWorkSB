@@ -15,29 +15,6 @@ if (typeof window.supabase === 'undefined') {
 // ใช้ตัวแปร global
 const supabaseClient = window.supabase;
 
-// เปลี่ยนทุกที่ที่ใช้ `supabase` เป็น `supabaseClient`
-// เช่น:
-async function testSupabaseConnection() {
-  try {
-    // ทดสอบดึงข้อมูล users
-    const { data, error } = await supabaseClient
-      .from('users')
-      .select('*')
-      .limit(1);
-    
-    if (error) {
-      console.error('Supabase connection error:', error);
-      return false;
-    }
-    
-    console.log('Supabase connection successful:', data);
-    return true;
-  } catch (error) {
-    console.error('Supabase connection test failed:', error);
-    return false;
-  }
-}
-
 // App State
 let currentUser = null;
 let currentPage = 'dashboard';
@@ -72,9 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update current time
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
-    
-    // Initialize sample data if needed
-    // initSampleData();
+
 });
 
 // Check for existing session
@@ -1072,12 +1047,6 @@ function showLoader(message = 'กำลังประมวลผล...') {
 // Hide loader
 function hideLoader() {
     globalLoader.classList.add('hidden');
-}
-
-// Initialize sample data
-function initSampleData() {
-    // This function would initialize Supabase tables in a real app
-    console.log('Initializing sample data...');
 }
 
 // Get sample today records
