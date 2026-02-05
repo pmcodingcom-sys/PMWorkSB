@@ -44,16 +44,23 @@ const mobileAdminPanel = document.getElementById('mobile-admin-panel');
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize event listeners
+    // 1. ผูก Event ต่างๆ
     initEventListeners();
     
-    // Check if user is already logged in (from localStorage)
+    // 2. ตรวจสอบ Session
     checkExistingSession();
     
-    // Update current time
+    // 3. เริ่มนับเวลา
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
 
+    // 4. (Safety Net) ถ้าผ่านไป 3 วินาทีแล้วยังไม่หาย ให้สั่งซ่อนเองเลย
+    setTimeout(() => {
+        if (!appLoader.classList.contains('hidden')) {
+            console.log("Safety hide loader triggered");
+            appLoader.classList.add('hidden');
+        }
+    }, 3000); 
 });
 
 // Check for existing session
@@ -84,6 +91,7 @@ function showLoginPage() {
 
 // Show app container
 function showAppContainer() {
+    appLoader.classList.add('hidden'); // เพิ่มบรรทัดนี้!!!
     loginPage.classList.add('hidden');
     appContainer.classList.remove('hidden');
 }
