@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบปฏิบัติงานพนักงาน | Employee Work System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'kanit': ['Kanit', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#3b82f6',
+                        'secondary': '#1e40af',
+                        'success': '#10b981',
+                        'warning': '#f59e0b',
+                        'danger': '#ef4444',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-kanit bg-gray-100">
+    <!-- Loader เริ่มต้น -->
+    <div id="app-loader" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-gray-600">กำลังโหลดระบบ...</p>
+        </div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="login-page" class="min-h-screen hidden">
+        <div class="container mx-auto px-4 py-16">
+            <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-8 py-10">
+                    <div class="text-center mb-10">
+                        <div class="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user-clock text-white text-3xl"></i>
+                        </div>
+                        <h1 class="text-3xl font-bold text-gray-800">ระบบปฏิบัติงานพนักงาน</h1>
+                        <p class="text-gray-600 mt-2">กรุณาเข้าสู่ระบบเพื่อเริ่มงาน</p>
+                    </div>
+                    
+                    <form id="login-form">
+                        <div class="mb-6">
+                            <label for="email" class="block text-gray-700 mb-2">อีเมล</label>
+                            <input type="email" id="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="กรอกอีเมลของคุณ" required>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="password" class="block text-gray-700 mb-2">รหัสผ่าน</label>
+                            <input type="password" id="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="กรอกรหัสผ่าน" required>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="user-type" class="block text-gray-700 mb-2">ประเภทผู้ใช้</label>
+                            <select id="user-type" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="employee">พนักงานทั่วไป</option>
+                                <option value="admin">ผู้ดูแลระบบ</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-primary hover:bg-secondary text-white font-medium py-3 px-4 rounded-lg transition duration-300 mb-4">
+                            <span id="login-text">เข้าสู่ระบบ</span>
+                            <span id="login-loading" class="hidden">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>กำลังเข้าสู่ระบบ...
+                            </span>
+                        </button>
+                        
+                        <div class="text-center text-gray-500 text-sm">
+                            <p>อีเมลตัวอย่าง: employee@company.com | admin@company.com</p>
+                            <p>รหัสผ่าน: password123</p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="min-h-screen hidden">
+        <!-- Desktop Sidebar -->
+        <aside id="desktop-sidebar" class="fixed left-0 top-0 h-screen w-64 bg-white shadow-lg hidden lg:block z-40">
+            <div class="p-6">
+                <div class="flex items-center mb-10">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user-clock text-white"></i>
+                    </div>
+                    <h2 class="text-xl font-bold ml-3">ระบบปฏิบัติงาน</h2>
+                </div>
+                
+                <nav>
+                    <ul id="desktop-menu">
+                        <!-- เมนูจะถูกเพิ่มโดย JavaScript -->
+                    </ul>
+                    
+                    <div class="pt-6 mt-6 border-t border-gray-200">
+                        <div class="flex items-center">
+                            <div id="user-avatar" class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                                <!-- อะวาต้าผู้ใช้ -->
+                            </div>
+                            <div class="ml-3">
+                                <p id="user-name" class="font-medium"></p>
+                                <p id="user-role" class="text-xs text-gray-500"></p>
+                            </div>
+                        </div>
+                        
+                        <button id="logout-btn-desktop" class="mt-6 w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition duration-300">
+                            <i class="fas fa-sign-out-alt mr-2"></i>ออกจากระบบ
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </aside>
+        
+        <!-- Mobile Bottom Navigation -->
+        <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white shadow-lg lg:hidden z-40">
+            <div class="flex justify-around items-center h-16">
+                <!-- เมนูมือถือจะถูกเพิ่มโดย JavaScript -->
+            </div>
+        </nav>
+        
+        <!-- Mobile Admin Panel -->
+        <div id="mobile-admin-panel" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+            <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">เมนูจัดการระบบ</h3>
+                    <button id="close-admin-panel" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4" id="admin-panel-buttons">
+                    <!-- ปุ่ม admin จะถูกเพิ่มโดย JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="lg:ml-64 pb-16 lg:pb-0">
+            <!-- Header -->
+            <header class="bg-white shadow-sm py-4 px-6">
+                <div class="flex justify-between items-center">
+                    <div class="lg:hidden">
+                        <h1 id="page-title" class="text-xl font-bold"></h1>
+                    </div>
+                    
+                    <div class="hidden lg:block">
+                        <h1 id="page-title-desktop" class="text-2xl font-bold"></h1>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <div class="hidden lg:flex items-center mr-6">
+                            <div class="w-3 h-3 bg-success rounded-full mr-2"></div>
+                            <span id="connection-status">ออนไลน์</span>
+                        </div>
+                        
+                        <div id="current-time" class="bg-gray-100 py-2 px-4 rounded-lg font-medium">
+                            <!-- เวลาปัจจุบัน -->
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Pages Container -->
+            <div id="pages-container" class="p-4 lg:p-6">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page hidden">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold mb-2">แดชบอร์ดปฏิบัติงาน</h2>
+                        <p class="text-gray-600">ข้อมูลสรุปการทำงานของพนักงานทั้งหมด</p>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-users text-primary text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">พนักงานทั้งหมด</p>
+                                    <p class="text-2xl font-bold" id="total-employees">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-user-check text-success text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">กำลังทำงาน</p>
+                                    <p class="text-2xl font-bold" id="active-employees">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-clock text-warning text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">ชั่วโมงทำงานเฉลี่ย</p>
+                                    <p class="text-2xl font-bold" id="avg-hours">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-map-marker-alt text-purple-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">ระยะทางเฉลี่ย</p>
+                                    <p class="text-2xl font-bold" id="avg-distance">0 <span class="text-sm">กม.</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts and Recent Activity -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Chart Container -->
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <h3 class="text-xl font-bold mb-6">สถิติการเข้างานรายสัปดาห์</h3>
+                            <div class="h-64 flex items-end justify-between pt-4">
+                                <!-- กราฟแท่งจะถูกสร้างโดย JavaScript -->
+                                <div id="weekly-chart" class="w-full h-48"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <h3 class="text-xl font-bold mb-6">กิจกรรมล่าสุด</h3>
+                            <div id="recent-activities" class="space-y-4">
+                                <!-- กิจกรรมล่าสุดจะถูกเพิ่มโดย JavaScript -->
+                                <div class="text-center py-8 text-gray-400">
+                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                    <p>กำลังโหลดข้อมูล...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Employee Status Table -->
+                    <div class="mt-8 bg-white rounded-xl shadow overflow-hidden">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-xl font-bold">สถานะพนักงานปัจจุบัน</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left">ชื่อพนักงาน</th>
+                                        <th class="py-3 px-4 text-left">สถานะ</th>
+                                        <th class="py-3 px-4 text-left">ตำแหน่ง</th>
+                                        <th class="py-3 px-4 text-left">เวลาเข้างาน</th>
+                                        <th class="py-3 px-4 text-left">ระยะทาง</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employee-status-table">
+                                    <!-- ข้อมูลพนักงานจะถูกเพิ่มโดย JavaScript -->
+                                    <tr>
+                                        <td colspan="5" class="py-8 text-center text-gray-400">
+                                            <i class="fas fa-spinner fa-spin text-xl mb-2"></i>
+                                            <p>กำลังโหลดข้อมูลพนักงาน...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Check-in/out Page -->
+                <div id="checkin-page" class="page hidden">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold mb-2">บันทึกการเข้า-ออกงาน</h2>
+                        <p class="text-gray-600">บันทึกเวลาเข้างานและออกงานของวันนี้</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Check-in/out Panel -->
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="text-center mb-8">
+                                <div class="w-24 h-24 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-user-clock text-white text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-2" id="current-status-text">ยังไม่ได้เช็คอิน</h3>
+                                <p class="text-gray-600" id="current-status-time"></p>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <button id="checkin-btn" class="w-full bg-success hover:bg-green-700 text-white font-medium py-4 px-6 rounded-lg text-lg transition duration-300">
+                                    <i class="fas fa-sign-in-alt mr-2"></i>เช็คอินเข้างาน
+                                </button>
+                                
+                                <button id="checkout-btn" class="w-full bg-danger hover:bg-red-700 text-white font-medium py-4 px-6 rounded-lg text-lg transition duration-300">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>เช็คเอ้าออกงาน
+                                </button>
+                            </div>
+                            
+                            <!-- Location Info -->
+                            <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+                                <div class="flex items-start">
+                                    <i class="fas fa-map-marker-alt text-primary mt-1 mr-3"></i>
+                                    <div>
+                                        <h4 class="font-medium mb-1">ข้อมูลตำแหน่ง</h4>
+                                        <p id="location-info" class="text-sm text-gray-600">กำลังดึงข้อมูลตำแหน่งปัจจุบัน...</p>
+                                        <p id="distance-info" class="text-sm text-gray-600 mt-1">ระยะห่างจากที่ทำงาน: กำลังคำนวณ...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Today's Timeline -->
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <h3 class="text-xl font-bold mb-6">ประวัติวันนี้</h3>
+                            <div id="today-timeline">
+                                <!-- ไทม์ไลน์จะถูกเพิ่มโดย JavaScript -->
+                                <div class="text-center py-8 text-gray-400">
+                                    <i class="fas fa-history text-2xl mb-2"></i>
+                                    <p>ยังไม่มีประวัติการทำงานวันนี้</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- History Page -->
+                <div id="history-page" class="page hidden">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold mb-2">ประวัติการทำงาน</h2>
+                        <p class="text-gray-600">ดูประวัติการเข้า-ออกงานทั้งหมดของคุณ</p>
+                    </div>
+                    
+                    <!-- Filter Options -->
+                    <div class="bg-white rounded-xl shadow p-6 mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">ช่วงเวลา</label>
+                                <select id="history-filter-period" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                                    <option value="7days">7 วันที่ผ่านมา</option>
+                                    <option value="30days">30 วันที่ผ่านมา</option>
+                                    <option value="90days">90 วันที่ผ่านมา</option>
+                                    <option value="all">ทั้งหมด</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-700 mb-2">ประเภท</label>
+                                <select id="history-filter-type" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                                    <option value="all">ทั้งหมด</option>
+                                    <option value="checkin">เช็คอิน</option>
+                                    <option value="checkout">เช็คเอ้าท์</option>
+                                </select>
+                            </div>
+                            
+                            <div class="md:col-span-2 flex items-end">
+                                <button id="filter-history-btn" class="w-full bg-primary hover:bg-secondary text-white font-medium py-3 px-6 rounded-lg transition duration-300">
+                                    <i class="fas fa-filter mr-2"></i>กรองข้อมูล
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- History Table -->
+                    <div class="bg-white rounded-xl shadow overflow-hidden">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-xl font-bold">รายการประวัติ</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left">วันที่</th>
+                                        <th class="py-3 px-4 text-left">เวลา</th>
+                                        <th class="py-3 px-4 text-left">ประเภท</th>
+                                        <th class="py-3 px-4 text-left">ตำแหน่ง</th>
+                                        <th class="py-3 px-4 text-left">ระยะทาง</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-table">
+                                    <!-- ข้อมูลประวัติจะถูกเพิ่มโดย JavaScript -->
+                                    <tr>
+                                        <td colspan="5" class="py-8 text-center text-gray-400">
+                                            <i class="fas fa-spinner fa-spin text-xl mb-2"></i>
+                                            <p>กำลังโหลดประวัติการทำงาน...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Admin Page -->
+                <div id="admin-page" class="page hidden">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold mb-2">จัดการระบบ</h2>
+                        <p class="text-gray-600">สำหรับผู้ดูแลระบบจัดการพนักงานและข้อมูล</p>
+                    </div>
+                    
+                    <!-- Admin Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition duration-300">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-user-plus text-primary text-xl"></i>
+                                </div>
+                                <h3 class="text-lg font-bold">จัดการพนักงาน</h3>
+                            </div>
+                            <p class="text-gray-600 mb-4">เพิ่ม ลบ แก้ไขข้อมูลพนักงานในระบบ</p>
+                            <button class="text-primary font-medium">ไปที่จัดการพนักงาน →</button>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition duration-300">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-chart-bar text-success text-xl"></i>
+                                </div>
+                                <h3 class="text-lg font-bold">รายงานสรุป</h3>
+                            </div>
+                            <p class="text-gray-600 mb-4">ดูรายงานสรุปและสถิติการทำงานทั้งหมด</p>
+                            <button class="text-primary font-medium">ดูรายงานสรุป →</button>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition duration-300">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-cog text-purple-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-lg font-bold">ตั้งค่าระบบ</h3>
+                            </div>
+                            <p class="text-gray-600 mb-4">กำหนดค่าต่างๆ ของระบบและสิทธิ์การเข้าถึง</p>
+                            <button class="text-primary font-medium">ไปที่ตั้งค่าระบบ →</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Admin Table -->
+                    <div class="bg-white rounded-xl shadow overflow-hidden">
+                        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                            <h3 class="text-xl font-bold">รายชื่อพนักงานทั้งหมด</h3>
+                            <button class="bg-primary hover:bg-secondary text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                <i class="fas fa-plus mr-2"></i>เพิ่มพนักงาน
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left">ชื่อพนักงาน</th>
+                                        <th class="py-3 px-4 text-left">อีเมล</th>
+                                        <th class="py-3 px-4 text-left">ตำแหน่งงาน</th>
+                                        <th class="py-3 px-4 text-left">สถานะ</th>
+                                        <th class="py-3 px-4 text-left">การจัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-employee-table">
+                                    <!-- ข้อมูลพนักงานสำหรับ admin จะถูกเพิ่มโดย JavaScript -->
+                                    <tr>
+                                        <td colspan="5" class="py-8 text-center text-gray-400">
+                                            <i class="fas fa-spinner fa-spin text-xl mb-2"></i>
+                                            <p>กำลังโหลดข้อมูลพนักงาน...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Profile Page -->
+                <div id="profile-page" class="page hidden">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold mb-2">ข้อมูลส่วนตัว</h2>
+                        <p class="text-gray-600">จัดการข้อมูลโปรไฟล์และตั้งค่าบัญชีของคุณ</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Profile Info -->
+                        <div class="lg:col-span-2 bg-white rounded-xl shadow p-6">
+                            <h3 class="text-xl font-bold mb-6">ข้อมูลส่วนตัว</h3>
+                            
+                            <form id="profile-form">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">ชื่อ</label>
+                                        <input type="text" id="profile-firstname" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="ชื่อ" required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">นามสกุล</label>
+                                        <input type="text" id="profile-lastname" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="นามสกุล" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-gray-700 mb-2">อีเมล</label>
+                                    <input type="email" id="profile-email" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="อีเมล" required disabled>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-gray-700 mb-2">ตำแหน่งงาน</label>
+                                    <input type="text" id="profile-position" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="ตำแหน่งงาน" required>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-gray-700 mb-2">แผนก</label>
+                                    <select id="profile-department" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                                        <option value="sales">ฝ่ายขาย</option>
+                                        <option value="marketing">ฝ่ายการตลาด</option>
+                                        <option value="it">ฝ่ายไอที</option>
+                                        <option value="hr">ฝ่ายทรัพยากรบุคคล</option>
+                                        <option value="finance">ฝ่ายการเงิน</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="bg-primary hover:bg-secondary text-white font-medium py-3 px-6 rounded-lg transition duration-300">
+                                    <span id="profile-save-text">บันทึกข้อมูล</span>
+                                    <span id="profile-save-loading" class="hidden">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...
+                                    </span>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Profile Summary -->
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <div class="text-center mb-6">
+                                <div id="profile-avatar" class="w-24 h-24 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
+                                    <!-- อะวาต้า -->
+                                </div>
+                                <h3 id="profile-fullname" class="text-xl font-bold"></h3>
+                                <p id="profile-role" class="text-gray-600"></p>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">เข้างานล่าสุด</span>
+                                    <span id="last-checkin" class="font-medium">-</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">ชั่วโมงทำงานเฉลี่ย</span>
+                                    <span id="personal-avg-hours" class="font-medium">0 ชม.</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">ระยะทางเฉลี่ย</span>
+                                    <span id="personal-avg-distance" class="font-medium">0 กม.</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">อัตราการเข้างาน</span>
+                                    <span id="attendance-rate" class="font-medium">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Logout Modal -->
+    <div id="logout-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-sign-out-alt text-danger text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">ยืนยันการออกจากระบบ</h3>
+                <p class="text-gray-600">คุณแน่ใจหรือไม่ที่ต้องการออกจากระบบ?</p>
+            </div>
+            
+            <div class="flex space-x-4">
+                <button id="cancel-logout" class="flex-1 py-3 px-4 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition duration-300">
+                    ยกเลิก
+                </button>
+                <button id="confirm-logout" class="flex-1 py-3 px-4 bg-danger hover:bg-red-700 text-white rounded-lg font-medium transition duration-300">
+                    ออกจากระบบ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Error Fallback Template -->
+    <template id="image-error-template">
+        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+            <div class="text-center text-gray-500">
+                <i class="fas fa-image text-2xl mb-2"></i>
+                <p class="text-sm">ไม่สามารถโหลดภาพได้</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Loader Overlay -->
+    <div id="global-loader" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 max-w-sm w-full mx-4 text-center">
+            <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p id="loader-message" class="text-gray-700">กำลังประมวลผล...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
