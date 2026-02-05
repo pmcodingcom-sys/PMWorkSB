@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(updateCurrentTime, 1000);
     
     // Initialize sample data if needed
-    initSampleData();
+    // initSampleData();
 });
 
 // Check for existing session
