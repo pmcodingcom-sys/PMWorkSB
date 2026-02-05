@@ -3,11 +3,40 @@
 
 // Supabase Configuration
 // หมายเหตุ: แทนที่ด้วยคีย์ Supabase จริงของคุณ
-const SUPABASE_URL = 'https://bibygpupfqmbbwecqgdb.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpYnlncHVwZnFtYmJ3ZWNxZ2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNTQ4NDQsImV4cCI6MjA4NTgzMDg0NH0.AL-c_UbvMzsy1DIZFuABStYNeXK2A-r_0uWg26-ET2A';
+const SUPABASE_URL = 'https://your-project-id.supabase.co';
+const SUPABASE_ANON_KEY = 'your-anon-key-here';
 
-// Initialize Supabase client
-const supabaseDB = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ตรวจสอบว่า supabase ถูกประกาศแล้วหรือยัง
+if (typeof window.supabase === 'undefined') {
+  // Initialize Supabase client
+  window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+// ใช้ตัวแปร global
+const supabaseClient = window.supabase;
+
+// เปลี่ยนทุกที่ที่ใช้ `supabase` เป็น `supabaseClient`
+// เช่น:
+async function testSupabaseConnection() {
+  try {
+    // ทดสอบดึงข้อมูล users
+    const { data, error } = await supabaseClient
+      .from('users')
+      .select('*')
+      .limit(1);
+    
+    if (error) {
+      console.error('Supabase connection error:', error);
+      return false;
+    }
+    
+    console.log('Supabase connection successful:', data);
+    return true;
+  } catch (error) {
+    console.error('Supabase connection test failed:', error);
+    return false;
+  }
+}
 
 // App State
 let currentUser = null;
