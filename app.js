@@ -6,14 +6,18 @@
 const SUPABASE_URL = 'https://bibygpupfqmbbwecqgdb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpYnlncHVwZnFtYmJ3ZWNxZ2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNTQ4NDQsImV4cCI6MjA4NTgzMDg0NH0.AL-c_UbvMzsy1DIZFuABStYNeXK2A-r_0uWg26-ET2A';
 
-// ตรวจสอบว่า supabase ถูกประกาศแล้วหรือยัง
-if (typeof window.supabase === 'undefined') {
-  // Initialize Supabase client
-  window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
+let supabaseClient;
 
-// ใช้ตัวแปร global
-const supabaseClient = window.supabase;
+try {
+    if (typeof supabase !== 'undefined') {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase initialized successfully");
+    } else {
+        console.error("Supabase library not found! Please check your internet or CDN link.");
+    }
+} catch (error) {
+    console.error("Initialization error:", error);
+}
 
 // App State
 let currentUser = null;
@@ -54,17 +58,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Check for existing session
 function checkExistingSession() {
-    const savedUser = localStorage.getItem('workSystemUser');
-    if (savedUser) {
-        try {
+    try {
+        const savedUser = localStorage.getItem('workSystemUser');
+        if (savedUser) {
             const user = JSON.parse(savedUser);
             loginUser(user);
-        } catch (e) {
-            console.error('Error parsing saved user:', e);
+        } else {
             showLoginPage();
         }
-    } else {
-        showLoginPage();
+    } catch (e) {
+        console.error('Error in session check:', e);
+        showLoginPage(); // ถ้า Error ให้กลับไปหน้า Login เสมอ
+    } finally {
+        // มั่นใจว่า Loader จะหายไปแน่นอน
+        if (appLoader) appLoader.classList.add('hidden');
     }
 }
 
