@@ -2,622 +2,633 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบปฏิบัติงานพนักงาน | Employee Work System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PMCoding Registration System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'kanit': ['Kanit', 'sans-serif'],
-                    },
-                    colors: {
-                        'primary': '#3b82f6',
-                        'secondary': '#1e40af',
-                        'success': '#10b981',
-                        'warning': '#f59e0b',
-                        'danger': '#ef4444',
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .page { display: none; }
+        .page.active { display: block; }
+        /* Loader Animation */
+        .loader { border-top-color: #4f46e5; animation: spinner 0.8s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body class="font-kanit bg-gray-100">
-    <!-- Loader เริ่มต้น -->
-    <div id="app-loader" class="fixed inset-0 bg-white flex items-center justify-center z-50">
-        <div class="text-center">
-            <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-gray-600">กำลังโหลดระบบ...</p>
-        </div>
+<body class="bg-gray-50 text-slate-800 antialiased overflow-x-hidden">
+
+    <div id="global-loader" class="fixed inset-0 z-[100] bg-white/90 flex flex-col items-center justify-center hidden">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10 mb-2"></div>
+        <p class="text-sm text-gray-500 animate-pulse">กำลังโหลดข้อมูล...</p>
     </div>
 
-    <!-- Login Page -->
-    <div id="login-page" class="min-h-screen hidden">
-        <div class="container mx-auto px-4 py-16">
-            <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div class="px-8 py-10">
-                    <div class="text-center mb-10">
-                        <div class="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-user-clock text-white text-3xl"></i>
-                        </div>
-                        <h1 class="text-3xl font-bold text-gray-800">ระบบปฏิบัติงานพนักงาน</h1>
-                        <p class="text-gray-600 mt-2">กรุณาเข้าสู่ระบบเพื่อเริ่มงาน</p>
-                    </div>
-                    
-                    <form id="login-form">
-                        <div class="mb-6">
-                            <label for="email" class="block text-gray-700 mb-2">อีเมล</label>
-                            <input type="email" id="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="กรอกอีเมลของคุณ" required>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <label for="password" class="block text-gray-700 mb-2">รหัสผ่าน</label>
-                            <input type="password" id="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="กรอกรหัสผ่าน" required>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <label for="user-type" class="block text-gray-700 mb-2">ประเภทผู้ใช้</label>
-                            <select id="user-type" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                                <option value="employee">พนักงานทั่วไป</option>
-                                <option value="admin">ผู้ดูแลระบบ</option>
-                            </select>
-                        </div>
-                        
-                        <button type="submit" class="w-full bg-primary hover:bg-secondary text-white font-medium py-3 px-4 rounded-lg transition duration-300 mb-4">
-                            <span id="login-text">เข้าสู่ระบบ</span>
-                            <span id="login-loading" class="hidden">
-                                <i class="fas fa-spinner fa-spin mr-2"></i>กำลังเข้าสู่ระบบ...
-                            </span>
-                        </button>
-                        
-                        <div class="text-center text-gray-500 text-sm">
-                            <p>อีเมลตัวอย่าง: employee@company.com | admin@company.com</p>
-                            <p>รหัสผ่าน: password123</p>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    <header id="public-header" class="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 z-40 px-6 py-4 flex justify-between items-center transition-all duration-300">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold">P</div>
+            <span class="font-bold text-lg text-slate-800">PMCoding</span>
         </div>
-    </div>
+        <button onclick="navTo('login')" class="px-5 py-2 bg-indigo-600 text-white rounded-full text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition">
+            เข้าสู่ระบบ
+        </button>
+    </header>
 
-    <!-- Main App Container -->
-    <div id="app-container" class="min-h-screen hidden">
-        <!-- Desktop Sidebar -->
-        <aside id="desktop-sidebar" class="fixed left-0 top-0 h-screen w-64 bg-white shadow-lg hidden lg:block z-40">
-            <div class="p-6">
-                <div class="flex items-center mb-10">
-                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                        <i class="fas fa-user-clock text-white"></i>
-                    </div>
-                    <h2 class="text-xl font-bold ml-3">ระบบปฏิบัติงาน</h2>
-                </div>
-                
-                <nav>
-                    <ul id="desktop-menu">
-                        <!-- เมนูจะถูกเพิ่มโดย JavaScript -->
-                    </ul>
-                    
-                    <div class="pt-6 mt-6 border-t border-gray-200">
-                        <div class="flex items-center">
-                            <div id="user-avatar" class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                                <!-- อะวาต้าผู้ใช้ -->
-                            </div>
-                            <div class="ml-3">
-                                <p id="user-name" class="font-medium"></p>
-                                <p id="user-role" class="text-xs text-gray-500"></p>
-                            </div>
-                        </div>
-                        
-                        <button id="logout-btn-desktop" class="mt-6 w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition duration-300">
-                            <i class="fas fa-sign-out-alt mr-2"></i>ออกจากระบบ
-                        </button>
-                    </div>
-                </nav>
+    <div class="flex min-h-screen pt-16 md:pt-0"> <aside id="app-sidebar" class="hidden flex-col w-64 bg-slate-900 text-white fixed h-full z-50 transition-transform">
+            <div class="p-6 border-b border-slate-800">
+                <h1 class="text-xl font-bold bg-gradient-to-r from-orange-400 to-amber-500 bg-clip-text text-transparent">PMCoding LMS</h1>
+                <p class="text-[10px] text-slate-400 mt-1">ยินดีต้อนรับ, <span id="user-name-display">User</span></p>
             </div>
-        </aside>
-        
-        <!-- Mobile Bottom Navigation -->
-        <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white shadow-lg lg:hidden z-40">
-            <div class="flex justify-around items-center h-16">
-                <!-- เมนูมือถือจะถูกเพิ่มโดย JavaScript -->
-            </div>
-        </nav>
-        
-        <!-- Mobile Admin Panel -->
-        <div id="mobile-admin-panel" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-            <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold">เมนูจัดการระบบ</h3>
-                    <button id="close-admin-panel" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                        <i class="fas fa-times"></i>
+            <nav class="flex-1 px-4 space-y-2 mt-4">
+                <button onclick="navTo('home')" class="w-full text-left p-3 rounded-xl hover:bg-slate-800 transition flex gap-3 items-center">
+                    <span>🏠</span> หน้าหลัก
+                </button>
+                <button onclick="navTo('my-courses')" class="w-full text-left p-3 rounded-xl hover:bg-slate-800 transition flex gap-3 items-center">
+                    <span>📚</span> วิชาของฉัน
+                </button>
+                <div id="admin-menu" class="hidden mt-4 pt-4 border-t border-slate-800">
+                    <p class="px-3 text-[10px] uppercase text-slate-500 mb-2">ผู้ดูแลระบบ</p>
+                    <button onclick="alert('หน้าจัดการ (Coming Soon)')" class="w-full text-left p-3 rounded-xl hover:bg-slate-800 transition flex gap-3 items-center">
+                        <span>⚙️</span> จัดการระบบ
                     </button>
                 </div>
-                
-                <div class="grid grid-cols-3 gap-4" id="admin-panel-buttons">
-                    <!-- ปุ่ม admin จะถูกเพิ่มโดย JavaScript -->
-                </div>
+            </nav>
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="handleLogout()" class="w-full p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition text-sm">ออกจากระบบ</button>
             </div>
-        </div>
-        
-        <!-- Main Content -->
-        <main id="main-content" class="lg:ml-64 pb-16 lg:pb-0">
-            <!-- Header -->
-            <header class="bg-white shadow-sm py-4 px-6">
-                <div class="flex justify-between items-center">
-                    <div class="lg:hidden">
-                        <h1 id="page-title" class="text-xl font-bold"></h1>
-                    </div>
-                    
-                    <div class="hidden lg:block">
-                        <h1 id="page-title-desktop" class="text-2xl font-bold"></h1>
-                    </div>
-                    
-                    <div class="flex items-center">
-                        <div class="hidden lg:flex items-center mr-6">
-                            <div class="w-3 h-3 bg-success rounded-full mr-2"></div>
-                            <span id="connection-status">ออนไลน์</span>
-                        </div>
-                        
-                        <div id="current-time" class="bg-gray-100 py-2 px-4 rounded-lg font-medium">
-                            <!-- เวลาปัจจุบัน -->
-                        </div>
-                    </div>
-                </div>
-            </header>
+        </aside>
+
+        <main id="main-content" class="flex-1 p-4 md:p-8 w-full transition-all duration-300">
             
-            <!-- Pages Container -->
-            <div id="pages-container" class="p-4 lg:p-6">
-                <!-- Dashboard Page -->
-                <div id="dashboard-page" class="page hidden">
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold mb-2">แดชบอร์ดปฏิบัติงาน</h2>
-                        <p class="text-gray-600">ข้อมูลสรุปการทำงานของพนักงานทั้งหมด</p>
-                    </div>
-                    
-                    <!-- Summary Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-users text-primary text-xl"></i>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500">พนักงานทั้งหมด</p>
-                                    <p class="text-2xl font-bold" id="total-employees">0</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-user-check text-success text-xl"></i>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500">กำลังทำงาน</p>
-                                    <p class="text-2xl font-bold" id="active-employees">0</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-clock text-warning text-xl"></i>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500">ชั่วโมงทำงานเฉลี่ย</p>
-                                    <p class="text-2xl font-bold" id="avg-hours">0</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-map-marker-alt text-purple-600 text-xl"></i>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500">ระยะทางเฉลี่ย</p>
-                                    <p class="text-2xl font-bold" id="avg-distance">0 <span class="text-sm">กม.</span></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Charts and Recent Activity -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Chart Container -->
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <h3 class="text-xl font-bold mb-6">สถิติการเข้างานรายสัปดาห์</h3>
-                            <div class="h-64 flex items-end justify-between pt-4">
-                                <!-- กราฟแท่งจะถูกสร้างโดย JavaScript -->
-                                <div id="weekly-chart" class="w-full h-48"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Recent Activity -->
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <h3 class="text-xl font-bold mb-6">กิจกรรมล่าสุด</h3>
-                            <div id="recent-activities" class="space-y-4">
-                                <!-- กิจกรรมล่าสุดจะถูกเพิ่มโดย JavaScript -->
-                                <div class="text-center py-8 text-gray-400">
-                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                                    <p>กำลังโหลดข้อมูล...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Employee Status Table -->
-                    <div class="mt-8 bg-white rounded-xl shadow overflow-hidden">
-                        <div class="p-6 border-b border-gray-200">
-                            <h3 class="text-xl font-bold">สถานะพนักงานปัจจุบัน</h3>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="py-3 px-4 text-left">ชื่อพนักงาน</th>
-                                        <th class="py-3 px-4 text-left">สถานะ</th>
-                                        <th class="py-3 px-4 text-left">ตำแหน่ง</th>
-                                        <th class="py-3 px-4 text-left">เวลาเข้างาน</th>
-                                        <th class="py-3 px-4 text-left">ระยะทาง</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="employee-status-table">
-                                    <!-- ข้อมูลพนักงานจะถูกเพิ่มโดย JavaScript -->
-                                    <tr>
-                                        <td colspan="5" class="py-8 text-center text-gray-400">
-                                            <i class="fas fa-spinner fa-spin text-xl mb-2"></i>
-                                            <p>กำลังโหลดข้อมูลพนักงาน...</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+            <section id="page-home" class="page active max-w-5xl mx-auto">
+                <div id="hero-section" class="mb-10 text-center py-10">
+                    <h1 class="text-3xl md:text-5xl font-bold text-slate-900 mb-4">เรียนรู้ได้ทุกที่ ทุกเวลา</h1>
+                    <p class="text-slate-500 mb-6">ระบบลงทะเบียนเรียนออนไลน์ที่ทันสมัยและใช้งานง่ายที่สุด</p>
+                    <div class="h-1 w-20 bg-orange-500 mx-auto rounded-full"></div>
                 </div>
-                
-                <!-- Check-in/out Page -->
-                <div id="checkin-page" class="page hidden">
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold mb-2">บันทึกการเข้า-ออกงาน</h2>
-                        <p class="text-gray-600">บันทึกเวลาเข้างานและออกงานของวันนี้</p>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Check-in/out Panel -->
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="text-center mb-8">
-                                <div class="w-24 h-24 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <i class="fas fa-user-clock text-white text-3xl"></i>
-                                </div>
-                                <h3 class="text-2xl font-bold mb-2" id="current-status-text">ยังไม่ได้เช็คอิน</h3>
-                                <p class="text-gray-600" id="current-status-time"></p>
-                            </div>
-                            
-                            <div class="space-y-4">
-                                <button id="checkin-btn" class="w-full bg-success hover:bg-green-700 text-white font-medium py-4 px-6 rounded-lg text-lg transition duration-300">
-                                    <i class="fas fa-sign-in-alt mr-2"></i>เช็คอินเข้างาน
-                                </button>
-                                
-                                <button id="checkout-btn" class="w-full bg-danger hover:bg-red-700 text-white font-medium py-4 px-6 rounded-lg text-lg transition duration-300">
-                                    <i class="fas fa-sign-out-alt mr-2"></i>เช็คเอ้าออกงาน
-                                </button>
-                            </div>
-                            
-                            <!-- Location Info -->
-                            <div class="mt-8 p-4 bg-blue-50 rounded-lg">
-                                <div class="flex items-start">
-                                    <i class="fas fa-map-marker-alt text-primary mt-1 mr-3"></i>
-                                    <div>
-                                        <h4 class="font-medium mb-1">ข้อมูลตำแหน่ง</h4>
-                                        <p id="location-info" class="text-sm text-gray-600">กำลังดึงข้อมูลตำแหน่งปัจจุบัน...</p>
-                                        <p id="distance-info" class="text-sm text-gray-600 mt-1">ระยะห่างจากที่ทำงาน: กำลังคำนวณ...</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Today's Timeline -->
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <h3 class="text-xl font-bold mb-6">ประวัติวันนี้</h3>
-                            <div id="today-timeline">
-                                <!-- ไทม์ไลน์จะถูกเพิ่มโดย JavaScript -->
-                                <div class="text-center py-8 text-gray-400">
-                                    <i class="fas fa-history text-2xl mb-2"></i>
-                                    <p>ยังไม่มีประวัติการทำงานวันนี้</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+                <div class="flex justify-between items-end mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">🔥 วิชาที่เปิดรับลงทะเบียน</h2>
                 </div>
-                
-                <!-- History Page -->
-                <div id="history-page" class="page hidden">
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold mb-2">ประวัติการทำงาน</h2>
-                        <p class="text-gray-600">ดูประวัติการเข้า-ออกงานทั้งหมดของคุณ</p>
+
+                <div id="course-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
                     </div>
-                    
-                    <!-- Filter Options -->
-                    <div class="bg-white rounded-xl shadow p-6 mb-8">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
-                                <label class="block text-gray-700 mb-2">ช่วงเวลา</label>
-                                <select id="history-filter-period" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
-                                    <option value="7days">7 วันที่ผ่านมา</option>
-                                    <option value="30days">30 วันที่ผ่านมา</option>
-                                    <option value="90days">90 วันที่ผ่านมา</option>
-                                    <option value="all">ทั้งหมด</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-gray-700 mb-2">ประเภท</label>
-                                <select id="history-filter-type" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
-                                    <option value="all">ทั้งหมด</option>
-                                    <option value="checkin">เช็คอิน</option>
-                                    <option value="checkout">เช็คเอ้าท์</option>
-                                </select>
-                            </div>
-                            
-                            <div class="md:col-span-2 flex items-end">
-                                <button id="filter-history-btn" class="w-full bg-primary hover:bg-secondary text-white font-medium py-3 px-6 rounded-lg transition duration-300">
-                                    <i class="fas fa-filter mr-2"></i>กรองข้อมูล
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- History Table -->
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
-                        <div class="p-6 border-b border-gray-200">
-                            <h3 class="text-xl font-bold">รายการประวัติ</h3>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="py-3 px-4 text-left">วันที่</th>
-                                        <th class="py-3 px-4 text-left">เวลา</th>
-                                        <th class="py-3 px-4 text-left">ประเภท</th>
-                                        <th class="py-3 px-4 text-left">ตำแหน่ง</th>
-                                        <th class="py-3 px-4 text-left">ระยะทาง</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="history-table">
-                                    <!-- ข้อมูลประวัติจะถูกเพิ่มโดย JavaScript -->
-                                    <tr>
-                                        <td colspan="5" class="py-8 text-center text-gray-400">
-                                            <i class="fas fa-spinner fa-spin text-xl mb-2"></i>
-                                            <p>กำลังโหลดประวัติการทำงาน...</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+            </section>
+
+            <section id="page-login" class="page max-w-md mx-auto mt-10">
+    <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-gray-100 text-center relative overflow-hidden">
+        
+        <div id="login-mode" class="transition-all duration-300">
+            <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🔐</div>
+            <h2 class="text-2xl font-bold mb-2">เข้าสู่ระบบ</h2>
+            <p class="text-gray-400 text-sm mb-6">ใช้อีเมลของคุณเพื่อจัดการข้อมูลการเรียน</p>
+            
+            <form id="login-form" class="space-y-4 text-left">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 ml-1">อีเมล</label>
+                    <input type="email" id="login-email" required class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="user@example.com">
                 </div>
-                
-                <!-- Admin Page -->
-                <div id="admin-page" class="page hidden">
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold mb-2">จัดการระบบ</h2>
-                        <p class="text-gray-600">สำหรับผู้ดูแลระบบจัดการพนักงานและข้อมูล</p>
-                    </div>
-                    
-                    <!-- Admin Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition duration-300">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-user-plus text-primary text-xl"></i>
-                                </div>
-                                <h3 class="text-lg font-bold">จัดการพนักงาน</h3>
-                            </div>
-                            <p class="text-gray-600 mb-4">เพิ่ม ลบ แก้ไขข้อมูลพนักงานในระบบ</p>
-                            <button class="text-primary font-medium">ไปที่จัดการพนักงาน →</button>
-                        </div>
-                        
-                        <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition duration-300">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-chart-bar text-success text-xl"></i>
-                                </div>
-                                <h3 class="text-lg font-bold">รายงานสรุป</h3>
-                            </div>
-                            <p class="text-gray-600 mb-4">ดูรายงานสรุปและสถิติการทำงานทั้งหมด</p>
-                            <button class="text-primary font-medium">ดูรายงานสรุป →</button>
-                        </div>
-                        
-                        <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition duration-300">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-cog text-purple-600 text-xl"></i>
-                                </div>
-                                <h3 class="text-lg font-bold">ตั้งค่าระบบ</h3>
-                            </div>
-                            <p class="text-gray-600 mb-4">กำหนดค่าต่างๆ ของระบบและสิทธิ์การเข้าถึง</p>
-                            <button class="text-primary font-medium">ไปที่ตั้งค่าระบบ →</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Admin Table -->
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
-                        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-                            <h3 class="text-xl font-bold">รายชื่อพนักงานทั้งหมด</h3>
-                            <button class="bg-primary hover:bg-secondary text-white font-medium py-2 px-4 rounded-lg transition duration-300">
-                                <i class="fas fa-plus mr-2"></i>เพิ่มพนักงาน
-                            </button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="py-3 px-4 text-left">ชื่อพนักงาน</th>
-                                        <th class="py-3 px-4 text-left">อีเมล</th>
-                                        <th class="py-3 px-4 text-left">ตำแหน่งงาน</th>
-                                        <th class="py-3 px-4 text-left">สถานะ</th>
-                                        <th class="py-3 px-4 text-left">การจัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="admin-employee-table">
-                                    <!-- ข้อมูลพนักงานสำหรับ admin จะถูกเพิ่มโดย JavaScript -->
-                                    <tr>
-                                        <td colspan="5" class="py-8 text-center text-gray-400">
-                                            <i class="fas fa-spinner fa-spin text-xl mb-2"></i>
-                                            <p>กำลังโหลดข้อมูลพนักงาน...</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 ml-1">รหัสผ่าน</label>
+                    <input type="password" id="login-password" required class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
                 </div>
-                
-                <!-- Profile Page -->
-                <div id="profile-page" class="page hidden">
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold mb-2">ข้อมูลส่วนตัว</h2>
-                        <p class="text-gray-600">จัดการข้อมูลโปรไฟล์และตั้งค่าบัญชีของคุณ</p>
+                <button type="submit" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition">เข้าใช้งาน</button>
+            </form>
+            <p class="mt-6 text-sm text-gray-500">
+                ยังไม่มีบัญชี? <button onclick="toggleAuthMode('register')" class="text-indigo-600 font-bold hover:underline">สมัครสมาชิกใหม่</button>
+            </p>
+        </div>
+
+        <div id="register-mode" class="hidden transition-all duration-300">
+            <div class="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📝</div>
+            <h2 class="text-2xl font-bold mb-2">สมัครสมาชิกใหม่</h2>
+            <p class="text-gray-400 text-sm mb-6">สร้างบัญชีเพื่อเริ่มเรียนรู้กับเรา</p>
+            
+            <form id="register-form" class="space-y-4 text-left">
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="text-xs font-bold text-gray-500 ml-1">ชื่อ-นามสกุล</label>
+            <input type="text" id="reg-name" required class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="สมชาย ใจดี">
+        </div>
+        <div>
+            <label class="text-xs font-bold text-gray-500 ml-1">Line ID</label>
+            <input type="text" id="reg-line" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="line1234">
+        </div>
+    </div>
+    
+    <div>
+        <label class="text-xs font-bold text-gray-500 ml-1">อีเมล</label>
+        <input type="email" id="reg-email" required class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="your@email.com">
+    </div>
+    <div>
+        <label class="text-xs font-bold text-gray-500 ml-1">ตั้งรหัสผ่าน (6 ตัวขึ้นไป)</label>
+        <input type="password" id="reg-password" required minlength="6" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="••••••••">
+    </div>
+    <button type="submit" class="w-full py-3 bg-orange-500 text-white rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-orange-600 active:scale-95 transition">ยืนยันการสมัคร</button>
+</form>
+            <p class="mt-6 text-sm text-gray-500">
+                มีบัญชีแล้ว? <button onclick="toggleAuthMode('login')" class="text-indigo-600 font-bold hover:underline">เข้าสู่ระบบ</button>
+            </p>
+        </div>
+
+        <button onclick="navTo('home')" class="mt-6 text-sm text-gray-400 hover:text-gray-600 underline">กลับหน้าหลัก</button>
+    </div>
+</section>
+
+            <section id="page-my-courses" class="page max-w-4xl mx-auto">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <span class="text-indigo-600">📚</span> วิชาของฉัน
+                </h2>
+                <div id="my-course-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <!-- Profile Info -->
-                        <div class="lg:col-span-2 bg-white rounded-xl shadow p-6">
-                            <h3 class="text-xl font-bold mb-6">ข้อมูลส่วนตัว</h3>
-                            
-                            <form id="profile-form">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                    <div>
-                                        <label class="block text-gray-700 mb-2">ชื่อ</label>
-                                        <input type="text" id="profile-firstname" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="ชื่อ" required>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-gray-700 mb-2">นามสกุล</label>
-                                        <input type="text" id="profile-lastname" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="นามสกุล" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-6">
-                                    <label class="block text-gray-700 mb-2">อีเมล</label>
-                                    <input type="email" id="profile-email" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="อีเมล" required disabled>
-                                </div>
-                                
-                                <div class="mb-6">
-                                    <label class="block text-gray-700 mb-2">ตำแหน่งงาน</label>
-                                    <input type="text" id="profile-position" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="ตำแหน่งงาน" required>
-                                </div>
-                                
-                                <div class="mb-6">
-                                    <label class="block text-gray-700 mb-2">แผนก</label>
-                                    <select id="profile-department" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
-                                        <option value="sales">ฝ่ายขาย</option>
-                                        <option value="marketing">ฝ่ายการตลาด</option>
-                                        <option value="it">ฝ่ายไอที</option>
-                                        <option value="hr">ฝ่ายทรัพยากรบุคคล</option>
-                                        <option value="finance">ฝ่ายการเงิน</option>
-                                    </select>
-                                </div>
-                                
-                                <button type="submit" class="bg-primary hover:bg-secondary text-white font-medium py-3 px-6 rounded-lg transition duration-300">
-                                    <span id="profile-save-text">บันทึกข้อมูล</span>
-                                    <span id="profile-save-loading" class="hidden">
-                                        <i class="fas fa-spinner fa-spin mr-2"></i>กำลังบันทึก...
-                                    </span>
-                                </button>
-                            </form>
-                        </div>
-                        
-                        <!-- Profile Summary -->
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="text-center mb-6">
-                                <div id="profile-avatar" class="w-24 h-24 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
-                                    <!-- อะวาต้า -->
-                                </div>
-                                <h3 id="profile-fullname" class="text-xl font-bold"></h3>
-                                <p id="profile-role" class="text-gray-600"></p>
-                            </div>
-                            
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span class="text-gray-700">เข้างานล่าสุด</span>
-                                    <span id="last-checkin" class="font-medium">-</span>
-                                </div>
-                                
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span class="text-gray-700">ชั่วโมงทำงานเฉลี่ย</span>
-                                    <span id="personal-avg-hours" class="font-medium">0 ชม.</span>
-                                </div>
-                                
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span class="text-gray-700">ระยะทางเฉลี่ย</span>
-                                    <span id="personal-avg-distance" class="font-medium">0 กม.</span>
-                                </div>
-                                
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span class="text-gray-700">อัตราการเข้างาน</span>
-                                    <span id="attendance-rate" class="font-medium">0%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <button onclick="navTo('home')" class="mt-8 px-6 py-2 bg-gray-200 rounded-full text-sm font-bold text-gray-600">← กลับไปดูวิชาอื่น</button>
+            </section>
+
         </main>
     </div>
 
-    <!-- Logout Modal -->
-    <div id="logout-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-sign-out-alt text-danger text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-bold mb-2">ยืนยันการออกจากระบบ</h3>
-                <p class="text-gray-600">คุณแน่ใจหรือไม่ที่ต้องการออกจากระบบ?</p>
+    <nav id="mobile-nav" class="hidden md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 h-16 flex items-center justify-around z-50 px-4 pb-safe shadow-2xl">
+        <button onclick="navTo('home')" class="flex flex-col items-center gap-1 text-slate-400 focus:text-indigo-600">
+            <span class="text-lg">🏠</span><span class="text-[10px]">หน้าแรก</span>
+        </button>
+        <button onclick="navTo('my-courses')" class="flex flex-col items-center gap-1 text-slate-400 focus:text-indigo-600">
+            <span class="text-lg">🎓</span><span class="text-[10px]">ของฉัน</span>
+        </button>
+        <button onclick="handleLogout()" class="flex flex-col items-center gap-1 text-red-300 focus:text-red-500">
+            <span class="text-lg">🚪</span><span class="text-[10px]">ออก</span>
+        </button>
+    </nav>
+
+<div id="payment-modal" class="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl animate-bounce-in">
+            <div class="bg-indigo-600 p-6 text-white text-center relative">
+                <button onclick="toggleModal('payment-modal', false)" class="absolute top-4 right-4 text-indigo-200 hover:text-white">✕</button>
+                <h3 class="text-xl font-bold">ยืนยันการลงทะเบียน</h3>
+                <p class="text-indigo-100 text-sm mt-1">กรุณาโอนเงินและแนบสลิป</p>
             </div>
             
-            <div class="flex space-x-4">
-                <button id="cancel-logout" class="flex-1 py-3 px-4 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition duration-300">
-                    ยกเลิก
-                </button>
-                <button id="confirm-logout" class="flex-1 py-3 px-4 bg-danger hover:bg-red-700 text-white rounded-lg font-medium transition duration-300">
-                    ออกจากระบบ
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <div>
+                        <p class="text-xs text-gray-500">วิชาที่จะลงเรียน</p>
+                        <h4 id="pay-course-title" class="font-bold text-slate-800">ชื่อวิชา...</h4>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500">ยอดชำระ</p>
+                        <p id="pay-course-price" class="text-xl font-bold text-orange-500">฿0</p>
+                    </div>
+                </div>
+
+                <div class="mb-6 text-center space-y-2">
+                    <p class="text-sm font-bold text-gray-600">โอนเงินเข้าบัญชี</p>
+                    <div class="flex items-center justify-center gap-3">
+                        <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs">SCB</div>
+                        <div class="text-left">
+                            <p class="font-bold text-slate-800">ธนาคารไทยพาณิชย์</p>
+                            <p class="text-sm text-slate-500">123-456-7890 (นายสมชาย สอนโค้ด)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">แนบสลิปการโอนเงิน</label>
+                    <input type="file" id="slip-file" accept="image/*" class="block w-full text-sm text-slate-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-xs file:font-semibold
+                        file:bg-indigo-50 file:text-indigo-700
+                        hover:file:bg-indigo-100
+                    "/>
+                    <p class="text-[10px] text-gray-400 mt-1">*รองรับไฟล์ .jpg, .png</p>
+                </div>
+
+                <button onclick="submitPayment()" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition">
+                    แจ้งชำระเงิน
                 </button>
             </div>
         </div>
     </div>
+	
+    <script>
+        // --- CONFIGURATION ---
+        // ใส่ URL และ Key ของคุณที่นี่
+        const SUPABASE_URL = 'https://bibygpupfqmbbwecqgdb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpYnlncHVwZnFtYmJ3ZWNxZ2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNTQ4NDQsImV4cCI6MjA4NTgzMDg0NH0.AL-c_UbvMzsy1DIZFuABStYNeXK2A-r_0uWg26-ET2A';
+        
+        // แก้ไขชื่อตัวแปรเพื่อไม่ให้ชนกับชื่อ Library
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <!-- Image Error Fallback Template -->
-    <template id="image-error-template">
-        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
-            <div class="text-center text-gray-500">
-                <i class="fas fa-image text-2xl mb-2"></i>
-                <p class="text-sm">ไม่สามารถโหลดภาพได้</p>
-            </div>
-        </div>
-    </template>
+        let currentUser = null;
+		let selectedCourseId = null; // ตัวแปรเก็บว่ากำลังจะจ่ายวิชาไหน
+		
+        // --- AUTH & STATE MANAGEMENT ---
+        async function checkSession() {
+            toggleLoader(true);
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (session) {
+                currentUser = session.user;
+                updateUI(true);
+				fetchUserProfile(); // <--- เพิ่มบรรทัดนี้ เพื่อไปดึงชื่อมาแสดง
+            } else {
+                updateUI(false);
+            }
+            toggleLoader(false);
+        }
 
-    <!-- Loader Overlay -->
-    <div id="global-loader" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl p-8 max-w-sm w-full mx-4 text-center">
-            <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p id="loader-message" class="text-gray-700">กำลังประมวลผล...</p>
-        </div>
-    </div>
+        function updateUI(isLoggedIn) {
+    const publicHeader = document.getElementById('public-header');
+    const sidebar = document.getElementById('app-sidebar');
+    const mobileNav = document.getElementById('mobile-nav');
+    const mainContent = document.getElementById('main-content');
+    const heroSection = document.getElementById('hero-section');
+    const userNameDisplay = document.getElementById('user-name-display');
 
-    <script src="app.js"></script>
+    if (isLoggedIn) {
+        // --- สถานะ: ล็อกอินแล้ว ---
+        
+        // 1. ซ่อน Header สาธารณะ
+        publicHeader.classList.add('hidden');
+        
+        // 2. จัดการ Sidebar (เมนูข้าง)
+        // ลบ class hidden เดิมออก
+        sidebar.classList.remove('hidden');
+        // ใส่ class เพื่อให้แสดงเฉพาะบนคอม (md:flex) และซ่อนบนมือถือ (hidden)
+        sidebar.classList.add('hidden', 'md:flex'); 
+        
+        // 3. จัดการ Mobile Nav (เมนูล่าง)
+        mobileNav.classList.remove('hidden');
+        // ให้แสดงเฉพาะมือถือ (flex) และซ่อนบนคอม (md:hidden)
+        mobileNav.classList.add('flex', 'md:hidden');
+
+        // 4. ซ่อน Hero Banner
+        if(heroSection) heroSection.classList.add('hidden');
+        
+        // 5. ขยับเนื้อหาหลักหนี Sidebar (เฉพาะบนคอม)
+        mainContent.classList.add('md:ml-64');
+
+        // 6. แสดงชื่อผู้ใช้
+        if(userNameDisplay && currentUser) {
+            userNameDisplay.innerText = currentUser.email.split('@')[0];
+        }
+
+    } else {
+        // --- สถานะ: ยังไม่ล็อกอิน ---
+        publicHeader.classList.remove('hidden');
+        
+        // ซ่อนเมนูระบบทั้งหมด
+        sidebar.classList.add('hidden');
+        sidebar.classList.remove('md:flex'); // เอา flex ออกเพื่อให้ซ่อนสนิท
+        
+        mobileNav.classList.add('hidden');
+        mobileNav.classList.remove('flex');
+
+        if(heroSection) heroSection.classList.remove('hidden');
+        mainContent.classList.remove('md:ml-64');
+    }
+}
+
+        // --- PAGE NAVIGATION ---
+        function navTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            window.scrollTo(0,0);
+
+            if(pageId === 'my-courses') fetchMyCourses();
+        }
+
+        // --- DATA FUNCTIONS ---
+        async function fetchCourses() {
+            toggleLoader(true);
+            const { data, error } = await supabaseClient
+                .from('courses')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error(error);
+                toggleLoader(false);
+                return;
+            }
+
+            const container = document.getElementById('course-list');
+            container.innerHTML = data.map(course => `
+                <div class="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
+                    <div class="relative h-48 overflow-hidden">
+                        <img src="${course.image_url}" 
+                             onerror="this.src='https://placehold.co/600x400/4f46e5/white?text=PMCoding';" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-lg text-slate-800 leading-tight">${course.title}</h3>
+                            <span class="bg-orange-100 text-orange-600 text-xs font-bold px-2 py-1 rounded-lg shrink-0 ml-2">
+                                ฿${course.price.toLocaleString()}
+                            </span>
+                        </div>
+                        
+                        <p class="text-xs text-gray-500 mb-4 line-clamp-2">${course.description || 'รายละเอียดวิชาเพิ่มเติม...'}</p>
+                        
+                        <div class="flex items-center justify-between mt-4">
+                            <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded">👨‍🏫 ${course.instructor}</span>
+                            
+                            <button onclick="handleRegister(${course.id}, '${course.title}', ${course.price})" 
+                                    class="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-full hover:bg-orange-500 transition shadow-lg">
+                                ลงทะเบียนเรียน
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            toggleLoader(false);
+        }
+
+        // ฟังก์ชันเตรียมเปิดหน้าต่างโอนเงิน (แก้ไขแล้ว)
+        function handleRegister(courseId, title, price) {
+            
+            // 1. เช็คว่าล็อกอินยัง?
+            if (!currentUser) {
+                if(confirm('กรุณาเข้าสู่ระบบก่อนลงทะเบียนเรียน\nต้องการไปหน้าเข้าสู่ระบบเลยหรือไม่?')) {
+                    navTo('login');
+                }
+                return;
+            }
+
+            // 2. จำค่าวิชาที่จะลงไว้ (เพื่อส่งต่อให้ฟังก์ชันจ่ายเงิน)
+            selectedCourseId = courseId;
+
+            // 3. เอาข้อมูลชื่อและราคา ไปโชว์ใน Modal
+            document.getElementById('pay-course-title').innerText = title;
+            document.getElementById('pay-course-price').innerText = '฿' + price.toLocaleString();
+            
+            // 4. เคลียร์ช่องไฟล์เก่า (ถ้ามี)
+            document.getElementById('slip-file').value = '';
+
+            // 5. เปิด Modal ขึ้นมา (จบหน้าที่ของฟังก์ชันนี้แค่นี้)
+            toggleModal('payment-modal', true);
+        }
+
+        async function fetchMyCourses() {
+            if(!currentUser) return;
+            toggleLoader(true);
+            
+            // Join ตาราง registrations กับ courses
+            const { data, error } = await supabaseClient
+                .from('registrations')
+                .select('registered_at, courses(*)')
+                .eq('user_id', currentUser.id);
+
+            const container = document.getElementById('my-course-list');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border border-dashed border-gray-300">
+                    <p class="text-gray-400">คุณยังไม่ได้ลงทะเบียนวิชาใดๆ</p>
+                    <button onclick="navTo('home')" class="mt-2 text-indigo-600 font-bold text-sm">ไปเลือกวิชาเรียน</button>
+                </div>`;
+            } else {
+                container.innerHTML = data.map(item => `
+                    <div class="flex bg-white p-4 rounded-2xl shadow-sm border border-gray-100 gap-4 items-center">
+                        <img src="${item.courses.image_url}" class="w-20 h-20 rounded-xl object-cover bg-gray-200">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-slate-800">${item.courses.title}</h4>
+                            <p class="text-xs text-gray-500">ผู้สอน: ${item.courses.instructor}</p>
+                            <p class="text-[10px] text-gray-400 mt-1">ลงเมื่อ: ${new Date(item.registered_at).toLocaleDateString('th-TH')}</p>
+                        </div>
+                        <span class="text-xs font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">Active</span>
+                    </div>
+                `).join('');
+            }
+            toggleLoader(false);
+        }
+
+        // --- AUTH ACTION (LOGIN & REGISTER) ---
+        
+        // 1. สลับโหมด Login <-> Register
+        function toggleAuthMode(mode) {
+            const loginMode = document.getElementById('login-mode');
+            const regMode = document.getElementById('register-mode');
+            
+            if (mode === 'register') {
+                loginMode.classList.add('hidden');
+                regMode.classList.remove('hidden');
+            } else {
+                regMode.classList.add('hidden');
+                loginMode.classList.remove('hidden');
+            }
+        }
+
+        // 2. ฟังก์ชัน Login
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            toggleLoader(true);
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                alert('❌ เข้าสู่ระบบไม่สำเร็จ: ' + error.message);
+                toggleLoader(false);
+            } else {
+                currentUser = data.user;
+                updateUI(true); 
+                navTo('home');  
+                // alert('ยินดีต้อนรับกลับครับ! 🎉'); // ตัดออกเพื่อให้เข้าไวขึ้น
+                toggleLoader(false);
+            }
+        });
+
+// 3. ฟังก์ชัน Register (ฉบับสมบูรณ์: เช็ค Error + บันทึก Profile)
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 1. ดึงค่าจากฟอร์ม
+            const name = document.getElementById('reg-name').value;
+            const lineId = document.getElementById('reg-line').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+
+            if (password.length < 6) {
+                alert('⚠️ รหัสผ่านต้อง 6 ตัวอักษรขึ้นไปครับ');
+                return;
+            }
+
+            toggleLoader(true);
+            
+            // 2. สมัครสมาชิก (Auth)
+            const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+            });
+
+            // --- จุดที่ปรับปรุง Error Handling อยู่ตรงนี้ครับ ---
+            if (authError) {
+                toggleLoader(false);
+                
+                // เช็คว่า Error คือ "อีเมลซ้ำ" หรือไม่
+                if (authError.message.includes("User already registered")) {
+                    alert('⚠️ อีเมลนี้เป็นสมาชิกอยู่แล้วครับ! \nระบบจะพาไปหน้าเข้าสู่ระบบแทน');
+                    toggleAuthMode('login'); // สลับไปหน้า Login ให้เลย
+                    document.getElementById('login-email').value = email; // กรอกอีเมลรอให้ด้วย
+                } else {
+                    alert('❌ สมัครไม่สำเร็จ: ' + authError.message);
+                }
+                return; // จบการทำงานทันที
+            }
+            // ---------------------------------------------
+
+            // 3. ถ้าสมัคร Auth ผ่าน -> บันทึกข้อมูลลงตาราง 'profiles'
+            if (authData.user) {
+                const { error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .insert([
+                        { 
+                            id: authData.user.id,    // เชื่อมกับ Auth ID
+                            full_name: name,         // ชื่อที่กรอก
+                            line_id: lineId,         // Line ID ที่กรอก
+                            role: 'user'             // ตั้งค่า Default
+                        }
+                    ]);
+
+                if (profileError) {
+                    console.error("Profile Error:", profileError);
+                    alert('⚠️ สมัครได้แล้ว แต่บันทึกชื่อไม่สำเร็จ (โปรดติดต่อแอดมิน)');
+                } else {
+                    alert('✅ สมัครสมาชิกเรียบร้อย! ยินดีต้อนรับครับ');
+                    
+                    // อัปเดต State และพาเข้าหน้าหลัก
+                    currentUser = authData.user;
+                    // (Optional) บันทึกชื่อไว้แสดงผลชั่วคราว
+                    if(currentUser) currentUser.user_metadata = { full_name: name }; 
+                    
+                    updateUI(true);
+                    fetchUserProfile(); // ดึงชื่อมาแสดง
+                    navTo('home');
+                }
+            }
+            
+            toggleLoader(false);
+        });
+
+// ฟังก์ชันดึงชื่อมาแสดง
+async function fetchUserProfile() {
+    if(!currentUser) return;
+    
+    const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('full_name, line_id')
+        .eq('id', currentUser.id)
+        .single();
+
+    if (data) {
+        const nameDisplay = document.getElementById('user-name-display');
+        if(nameDisplay) nameDisplay.innerText = data.full_name || currentUser.email;
+    }
+}
+
+async function submitPayment() {
+    const fileInput = document.getElementById('slip-file');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert('⚠️ กรุณาแนบสลิปการโอนเงินด้วยครับ');
+        return;
+    }
+
+    toggleLoader(true);
+
+    try {
+        // 1. ตั้งชื่อไฟล์ใหม่ (กันชื่อซ้ำ) -> userId/timestamp.jpg
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+
+        // 2. อัปโหลดรูปขึ้น Storage Bucket 'slips'
+        const { data: uploadData, error: uploadError } = await supabaseClient
+            .storage
+            .from('slips')
+            .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // 3. ขอ Public URL ของรูปที่อัปโหลด
+        const { data: { publicUrl } } = supabaseClient
+            .storage
+            .from('slips')
+            .getPublicUrl(fileName);
+
+        // 4. บันทึกลงฐานข้อมูล registrations
+        const { error: dbError } = await supabaseClient
+            .from('registrations')
+            .insert([
+                { 
+                    user_id: currentUser.id, 
+                    course_id: selectedCourseId,
+                    slip_url: publicUrl,
+                    status: 'pending' // สถานะรอตรวจสอบ
+                }
+            ]);
+
+        if (dbError) {
+            if (dbError.code === '23505') throw new Error('คุณได้ลงทะเบียนวิชานี้ไปแล้ว');
+            throw dbError;
+        }
+
+        // สำเร็จ!
+        alert('✅ แจ้งชำระเงินเรียบร้อย!\nแอดมินจะตรวจสอบสลิปและอนุมัติในเร็วๆ นี้ครับ');
+        toggleModal('payment-modal', false);
+        navTo('my-courses');
+
+    } catch (error) {
+        alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+    } finally {
+        toggleLoader(false);
+    }
+}
+
+// ฟังก์ชันเปิด-ปิด Modal (หน้าต่างเด้ง)
+        function toggleModal(modalID, show) {
+            const modal = document.getElementById(modalID);
+            if (modal) {
+                if (show) {
+                    modal.classList.remove('hidden');
+                    // เพิ่ม class flex เพื่อให้จัดกึ่งกลาง
+                    modal.classList.add('flex'); 
+                } else {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            } else {
+                console.error('ไม่พบ Modal ID:', modalID);
+            }
+        }
+		
+        async function handleLogout() {
+            if(confirm('ต้องการออกจากระบบ?')) {
+                toggleLoader(true);
+                await supabaseClient.auth.signOut();
+                currentUser = null;
+                updateUI(false); // เปลี่ยนหน้าตากลับเป็นแบบ Public
+                navTo('home');
+                toggleLoader(false);
+            }
+        }
+
+        // --- UI UTILS ---
+        function toggleLoader(show) {
+            document.getElementById('global-loader').classList.toggle('hidden', !show);
+        }
+		
+
+        // --- INIT ---
+        window.onload = () => {
+            checkSession();
+            fetchCourses();
+        };
+    </script>
 </body>
 </html>
